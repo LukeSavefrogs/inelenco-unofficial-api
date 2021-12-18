@@ -144,7 +144,7 @@ app.get('/search', async (req, res) => {
 	}
 
 	let url = `${INELENCO_URL}?dir=cerca&cerca=${encodeURIComponent(query_pieces.join(" AND "))}`
-	// console.log(url)
+	console.log("Requesting url: " + url)
 
 	// Scarica l'html della pagina e salvalo in una variabile
 	let html = await fetch("https://cors-anywhere-luke.herokuapp.com/" + url, { headers: { "Origin": "localhost" }})
@@ -157,8 +157,17 @@ app.get('/search', async (req, res) => {
 	let content = dom.window.document.getElementById("content");
 	let rows = content.querySelectorAll("tbody > tr");
 
+
+
+
 	// Se non ci sono dati disponibili restituisci un mesaggio appropriato
-	let pages = dom.window.document.querySelectorAll("body > table > tbody > tr:nth-of-type(9) > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(4) > table > tbody > tr > td > a:not(.listapaggira)")
+	let pages = Math.max(
+		...Array.from(
+			dom.window.document.querySelectorAll("body > table > tbody > tr:nth-of-type(9) > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(4) > table > tbody > tr > td > a:not(.listapaggira)")
+		)
+		.map(a => a.textContent)
+	);
+
 	
 	if (Array.from(rows).map(row => innerText(row)).filter(row => row.replace(/\n/g, "").trim() != "").length == 0) {
 		res.status(200).json({
@@ -170,16 +179,21 @@ app.get('/search', async (req, res) => {
 	}
 
 	
-	for (let current_page=0; current_page<=pages.length*10; current_page+=10) {
-		// console.log(`Current Page: ${current_page}`)
+	for (let current_page=0; current_page<=pages*10; current_page+=10) {
+		console.log(`Current Page: ${current_page} of ${pages} (${formatted_data.flat().length} results)`)
 
 		// Scarica nuovamente i dati solo se non è la prima volta che esegui il loop
 		if (current_page != 0){
 			html = await fetch(`https://cors-anywhere-luke.herokuapp.com/${url}&da=${current_page}`, { headers: { "Origin": "localhost" }})
 				.then(res => res.text());
 			dom = new jsdom.JSDOM(html);
-			pages = dom.window.document.querySelectorAll("body > table > tbody > tr:nth-of-type(9) > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(4) > table > tbody > tr > td > a:not(.listapaggira)")
-			
+			pages = Math.max(
+				...Array.from(
+					dom.window.document.querySelectorAll("body > table > tbody > tr:nth-of-type(9) > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(4) > table > tbody > tr > td > a:not(.listapaggira)")
+				)
+				.map(a => a.textContent)
+			);
+
 			content = dom.window.document.getElementById("content");
 			rows = content.querySelectorAll("tbody > tr");
 		}
@@ -218,7 +232,7 @@ app.get('/search', async (req, res) => {
 		// console.log("Fine")
 	}
 
-
+	console.log("Total results: " + formatted_data.flat().length)
 
 	res.json({
 		"success": true,
