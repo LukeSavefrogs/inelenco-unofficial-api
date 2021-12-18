@@ -26,85 +26,96 @@ const INELENCO_URL = "https://www.inelenco.com/";
 
 app.get('/usage', (req, res) => {
 	const html = `
-		<style>
-			html, body {
-				padding: 0;
-				margin: 0;
-				font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell,
-					Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
-			}
-			* {
-				box-sizing: border-box;
-			}
-			
-			main {
-				padding: 2rem 5rem;
-				display: flex;
-				flex-direction: column;
-				justify-content: center;
-				align-items: center;
-			}
-			
-			code {
-				background: #fafafa;
-				border-radius: 5px;
-				padding: 0.75rem;
-				font-family: Menlo, Monaco, Lucida Console, Courier New, monospace;
-			}
-			  
-			.container {
-				height: 100vh;
-				display: flex;
-				flex-direction: column;
-				justify-content: center;
-				align-items: center;
-			}
-		</style>
-		<div class="container">
-			<main>
-				<h1>Benvenuto!</h1>
-				<h2>Dove mi trovo?</h2>
-				<p>
-					Ho creato questa API per poter reperire in maniera programmatica i dati da 
-					<a href="https://www.inelenco.com/">InElenco</a>, con una sintassi semplice e moderna basata su delle chiamate GET.
-				</p>
-				<h2>Come si usa?</h2>
-				<p>
-					Sei un programmatore e desideri integrare le funzionalità di <a href="https://www.inelenco.com/">InElenco</a> all'interno della tua applicazione?
-					<pre>
-						GET ${req.hostname}/search
+		<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta http-equiv="X-UA-Compatible" content="IE=edge">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<title>InElenco Unofficial API - Usage</title>
+		</head>
+		<body>
+			<style>
+				html, body {
+					padding: 0;
+					margin: 0;
+					font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell,
+						Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+				}
+				* {
+					box-sizing: border-box;
+				}
+				
+				main {
+					padding: 2rem 5rem;
+					display: flex;
+					flex-direction: column;
+					justify-content: center;
+					align-items: center;
+				}
+				
+				code {
+					background: #fafafa;
+					border-radius: 5px;
+					padding: 0.75rem;
+					font-family: Menlo, Monaco, Lucida Console, Courier New, monospace;
+				}
+				
+				.container {
+					height: 100vh;
+					display: flex;
+					flex-direction: column;
+					justify-content: center;
+					align-items: center;
+				}
+			</style>
+			<div class="container">
+				<main>
+					<h1>Benvenuto!</h1>
+					<h2>Cos'è?</h2>
+					<p>
+						Ho creato questa API per poter reperire in maniera programmatica i dati da 
+						<a href="https://www.inelenco.com/">InElenco</a>, con una sintassi semplice e moderna basata su delle chiamate GET.
+					</p>
+					<h2>Come si usa?</h2>
+					<p>
+						Sei un programmatore e desideri integrare le funzionalità di <a href="https://www.inelenco.com/">InElenco</a> all'interno della tua applicazione?
+						<pre>
+							GET ${req.hostname}/search
 
-						Parametri InElenco:
-						{
-							nome
-							indirizzo
-							cap
-							telefono
-							fax
-							cellulare
-							comune
-							provincia
-							tipo (privato/azienda)
-							categoria (settore azienda vedi elenco settori)
-						}
+							Parametri InElenco:
+							{
+								nome
+								indirizzo
+								cap
+								telefono
+								fax
+								cellulare
+								comune
+								provincia
+								tipo (privato/azienda)
+								categoria (settore azienda vedi elenco settori)
+							}
 
-						Parametri Esclusivi:
-						{
-							civico_da
-							civico_a
-						}
-					</pre>
-				</p>
-			</main>
-			<div>
-				<h6>Disclaimer</h6>
-				<p style="font-size: 10px;">
-					Non sono affiliato nè tantomeno in qualche modo collegato al proprietario di <a href="https://www.inelenco.com/">InElenco</a>.
-					Questa API non è ufficiale e non si assicura il suo mantenimento nel tempo. Usare con cautela.
-				</p>
+							Parametri Esclusivi:
+							{
+								civico_da
+								civico_a
+							}
+						</pre>
+					</p>
+				</main>
+				<div>
+					<h6>Disclaimer</h6>
+					<p style="font-size: 10px;">
+						Non sono affiliato nè tantomeno in qualche modo collegato al proprietario di <a href="https://www.inelenco.com/">InElenco</a>.
+						Questa API non è ufficiale e non si assicura il suo mantenimento nel tempo. Usare con cautela.
+					</p>
+				</div>
 			</div>
-		</div>
-	`
+		</body>
+		</html>
+	`;
 	res.send(html)
 })
 
