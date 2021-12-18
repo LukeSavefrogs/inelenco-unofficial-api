@@ -144,7 +144,8 @@ app.get('/search', async (req, res) => {
 	}
 
 	let url = `${INELENCO_URL}?dir=cerca&cerca=${encodeURIComponent(query_pieces.join(" AND "))}`
-	
+	// console.log(url)
+
 	// Scarica l'html della pagina e salvalo in una variabile
 	let html = await fetch("https://cors-anywhere-luke.herokuapp.com/" + url, { headers: { "Origin": "localhost" }})
 					.then(res => res.text());
@@ -153,18 +154,22 @@ app.get('/search', async (req, res) => {
 
 	// Inizializza l'oggetto JSDOM con l'html appena scaricato
 	let dom = new jsdom.JSDOM(html);
+	let content = dom.window.document.getElementById("content");
+	let rows = content.querySelectorAll("tbody > tr");
 
 	// Se non ci sono dati disponibili restituisci un mesaggio appropriato
 	let pages = dom.window.document.querySelectorAll("body > table > tbody > tr:nth-of-type(9) > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(4) > table > tbody > tr > td > a:not(.listapaggira)")
-	if (pages.length == 0) {
+	
+	if (Array.from(rows).map(row => innerText(row)).filter(row => row.replace(/\n/g, "").trim() != "").length == 0) {
 		res.status(200).json({
 			"success": true,
-			"message": "Nessun dato trovato",
-			"data": {}
+			"message": "Nessun dato trovato per i parametri cercati",
+			"data": []
 		});
 		return;
 	}
 
+	
 	for (let current_page=0; current_page<=pages.length*10; current_page+=10) {
 		// console.log(`Current Page: ${current_page}`)
 
@@ -174,10 +179,11 @@ app.get('/search', async (req, res) => {
 				.then(res => res.text());
 			dom = new jsdom.JSDOM(html);
 			pages = dom.window.document.querySelectorAll("body > table > tbody > tr:nth-of-type(9) > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(4) > table > tbody > tr > td > a:not(.listapaggira)")
+			
+			content = dom.window.document.getElementById("content");
+			rows = content.querySelectorAll("tbody > tr");
 		}
 
-		let content = dom.window.document.getElementById("content");
-		let rows = content.querySelectorAll("tbody > tr");
 	
 		var data = Array.from(rows).map(el => innerText(el).replace(/\r?\n/g, " ").trim()).filter((element, index, array) => {
 			return element.trim() != "" 
