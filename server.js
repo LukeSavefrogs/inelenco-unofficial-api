@@ -16,7 +16,6 @@ function innerText(el) {
 }
 
 const fs = require("fs");
-const { sendJson } = require('next/dist/server/api-utils');
 
 const INELENCO_URL = "https://www.inelenco.com/";
 
