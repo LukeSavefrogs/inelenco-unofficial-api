@@ -1,7 +1,12 @@
 const express = require('express')
 const cors = require('cors')
+const apicache = require('apicache');
+
 const app = express()
 const port = process.env.PORT || 2000
+
+let cache = apicache.middleware;
+app.use(cache('20 minutes'));
 
 app.use(cors())
 
@@ -110,6 +115,7 @@ function generateNumberSequence (start, end, all_numbers = false) {
 	return numbers;
 }
 
+// https://medium.com/@bojanmajed/standard-json-api-response-format-c6c1aabcaa6d
 app.get('/search', async (req, res) => {
 	const parameters = {
 		"nome": req.query['nome'] || "",
@@ -151,7 +157,11 @@ app.get('/search', async (req, res) => {
 	// Se non ci sono dati disponibili restituisci un mesaggio appropriato
 	let pages = dom.window.document.querySelectorAll("body > table > tbody > tr:nth-of-type(9) > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(4) > table > tbody > tr > td > a:not(.listapaggira)")
 	if (pages.length == 0) {
-		res.status(200).json({"message": "Nessun dato trovato"});
+		res.status(200).json({
+			"success": true,
+			"message": "Nessun dato trovato",
+			"data": {}
+		});
 		return;
 	}
 
@@ -192,7 +202,7 @@ app.get('/search', async (req, res) => {
 		formatted_data.push(temp_array.map(data_group => {
 			return {
 				"nominativo": data_group[0],
-				"telefono": data_group[1],
+				"telefono": data_group[1].replace(/telefono\s*/i, ""),
 				"indirizzo": data_group[2],
 				"zona": data_group[3],
 				// "original": data_group
@@ -204,7 +214,11 @@ app.get('/search', async (req, res) => {
 
 
 
-	res.send(formatted_data.flat())
+	res.json({
+		"success": true,
+		"message": "Dati trovati",
+		"data": formatted_data.flat()
+	})
 	// res.send(pages.map(el => el.element.parentElement.innerHTML).join(" "))
 	// res.send(content.innerHTML)
 })
