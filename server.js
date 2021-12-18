@@ -129,6 +129,8 @@ app.get('/search', async (req, res) => {
 		"categoria": req.query['categoria'] || "",
 	}
 
+	const expect_big_query = (req.query['allow_big_query'] || "false") == "true" ? true : false;
+
 	const numero_civico_da = req.query['civico_da'] || 0;
 	const numero_civico_a = req.query['civico_a'] || 0;
 
@@ -155,9 +157,17 @@ app.get('/search', async (req, res) => {
 	// Inizializza l'oggetto JSDOM con l'html appena scaricato
 	let dom = new jsdom.JSDOM(html);
 	let content = dom.window.document.getElementById("content");
+	let contentHead = dom.window.document.getElementById("contenthead");
 	let rows = content.querySelectorAll("tbody > tr");
 
 
+	let search_details = contentHead.textContent.match(/([0-9]*) - ([0-9]*) di ([0-9]*) risultati in \(([0-9\.]*) Secondi\)/)
+	search_details = {
+		"pagina_min": search_details[1],
+		"pagina_max": search_details[2],
+		"totale_risultati": search_details[3],
+		"durata_ricerca": search_details[4],
+	}
 
 
 	// Se non ci sono dati disponibili restituisci un mesaggio appropriato
@@ -178,9 +188,19 @@ app.get('/search', async (req, res) => {
 		return;
 	}
 
+	// TODO: Permetti di fare grandi ricerche ma restituisci solo i primi 1000 risultati
+	if (search_details["totale_risultati"] > 1000 && !expect_big_query) {
+		res.status(200).json({
+			"success": false,
+			"message": `Il numero di risultati per la query fornita supera i 1000 record (${search_details["totale_risultati"]} trovati) e il parametro 'allow_big_query' non è stato passato o non era impostato a 'true'. Fai una ricerca più mirata.`,
+			"data": []
+		});
+		return;
+	}
+
 	
 	for (let current_page=0; current_page<=pages*10; current_page+=10) {
-		console.log(`Current Page: ${current_page} of ${pages} (${formatted_data.flat().length} results)`)
+		console.log(`Current Page: ${current_page} of ${pages} (${search_details["totale_risultati"]} results) [${search_details["durata_ricerca"]}s]`)
 
 		// Scarica nuovamente i dati solo se non è la prima volta che esegui il loop
 		if (current_page != 0){
@@ -196,6 +216,14 @@ app.get('/search', async (req, res) => {
 
 			content = dom.window.document.getElementById("content");
 			rows = content.querySelectorAll("tbody > tr");
+			contentHead = dom.window.document.getElementById("contenthead");
+			search_details = contentHead.textContent.match(/([0-9]*) - ([0-9]*) di ([0-9]*) risultati in \(([0-9\.]*) Secondi\)/)
+			search_details = {
+				"pagina_min": search_details[1],
+				"pagina_max": search_details[2],
+				"totale_risultati": search_details[3],
+				"durata_ricerca": search_details[4],
+			}
 		}
 
 	
