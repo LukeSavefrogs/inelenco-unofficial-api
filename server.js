@@ -7,8 +7,10 @@ const port = process.env.PORT || 2000
 
 let cache = apicache.middleware;
 app.use(cache('20 minutes'));
-
 app.use(cors())
+
+
+app.set('title', 'InElenco Unofficial API');
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const jsdom = require("jsdom");
@@ -19,8 +21,6 @@ function innerText(el) {
   el.querySelectorAll('script,style').forEach(s => s.remove())
   return el.textContent
 }
-
-const fs = require("fs");
 
 const INELENCO_URL = "https://www.inelenco.com/";
 
@@ -72,7 +72,7 @@ app.get('/usage', (req, res) => {
 				<p>
 					Sei un programmatore e desideri integrare le funzionalità di <a href="https://www.inelenco.com/">InElenco</a> all'interno della tua applicazione?
 					<pre>
-						GET /search
+						GET ${req.hostname}/search
 
 						Parametri InElenco:
 						{
@@ -189,6 +189,8 @@ app.get('/search', async (req, res) => {
 	}
 
 	// TODO: Permetti di fare grandi ricerche ma restituisci solo i primi 1000 risultati
+	// Questo controllo serve per evitare una sorta di DDOS e per evitare che gli utenti per errore facciano 
+	// 	una richiesta che possa bloccare il mio server e appesantire quello di InElenco
 	if (search_details["totale_risultati"] > 1000 && !expect_big_query) {
 		res.status(200).json({
 			"success": false,
@@ -275,6 +277,7 @@ app.get('*', function(req, res){
 	res.redirect("/usage")
 });
   
+app.set('title', 'InElenco Unofficial API');
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`)
