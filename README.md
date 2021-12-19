@@ -13,11 +13,11 @@ Inizialmente l'idea di creare un'API per inElenco è nata dalla necessità di fi
 Da qui è nata la sfida. Creare un'interfaccia che utilizzasse inElenco ma permettesse di fare ricerche mirate sfruttando il suo notevole sistema di query.
 
 > ATTENZIONE:  
-> L'obbiettivo non è mai stato nè mai sarà *sostituirsi* a inElenco, bensì fare da "framework", fornendo un'interfaccia ad alto livello che permetta di sfruttare in modo intuitivo i filtri messi a disposizione da inElenco.
+> L'obbiettivo non è mai stato nè mai sarà *sostituirsi* a inElenco, bensì fare da "framework", fornendo un'interfaccia ad alto livello che permetta di sfruttare in modo intuitivo i filtri messi a disposizione da inElenco stesso.
 
-A queste query ci si affiancano alcune funzionalità create ex-novo, come la possibilità di ricercare in modo semplice un singolo civico (usando il parametro GET `civico`) oppure cercare un range di civici (combinando `civico_da` e `civico_a`).
+A queste query si affiancano alcune funzionalità extra, come la possibilità di ricercare in modo semplice un singolo civico (usando il parametro GET `civico`) oppure cercare un range di civici (combinando `civico_da` e `civico_a`).
 
-Questo progetto è stato quindi creato per scopo didattico, si rifa a dati pubblici, e non mira a ledere nè a discriminare il di altri (compresi gli sviluppatori di inElenco).
+Questo progetto è stato quindi creato per scopo didattico, si rifa a dati pubblici, e non mira a ledere nè a discriminare l'operato di altri (compresi gli sviluppatori di inElenco).
 
 
 ### Back-End
