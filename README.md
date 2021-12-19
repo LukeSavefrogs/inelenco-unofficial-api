@@ -7,6 +7,24 @@ Per modificare:
 [![GitHub latest commit](https://badgen.net/github/last-commit/LukeSavefrogs/inelenco-unofficial-api/main)](https://GitHub.com/LukeSavefrogs/inelenco-unofficial-api/commit/main)
 
 ## :mortar_board: Introduzione
+### Perchè?
+Inizialmente l'idea di creare un'API per inElenco è nata dalla necessità di filtrare i numeri civici, cosa complicata da fare manualmente in quanto l'unico modo per farlo è fare manualmente (cercando quindi talvolta su centinaia di indirizzi a volte anche duplicati) oppure usare una query personalizzata usando il formato descritto dalla guida sul loro sito.  
+
+Da qui è nata la sfida. Creare un'interfaccia che utilizzasse inElenco ma permettesse di fare ricerche mirate sfruttando il suo notevole sistema di query.
+
+> ATTENZIONE:  
+> L'obbiettivo non è mai stato nè mai sarà *sostituirsi* a inElenco, bensì fare da "framework", fornendo un'interfaccia ad alto livello che permetta di sfruttare in modo intuitivo i filtri messi a disposizione da inElenco.
+
+A queste query ci si affiancano alcune funzionalità create ex-novo, come la possibilità di ricercare in modo semplice un singolo civico (usando il parametro GET `civico`) oppure cercare un range di civici (combinando `civico_da` e `civico_a`).
+
+Questo progetto è stato quindi creato per scopo didattico, si rifa a dati pubblici, e non mira a ledere nè a discriminare il di altri (compresi gli sviluppatori di inElenco).
+
+
+### Back-End
+> https://inelenco-unofficial-api.herokuapp.com
+
+### Front-End
+:rocket: _In arrivo_ :rocket:
 
 ## :books: Documentazione
 ### Endpoint richieste
@@ -18,7 +36,7 @@ GET inelenco-unofficial-api.herokuapp.com/search
 <table align="center">
 	<thead>
 		<tr>
-			<th colspan="5" align="center">Parametri InElenco</th>
+			<th colspan="5" align="center">Parametri inElenco</th>
 		</tr>
 		<tr>
 			<th>Nome</th>
@@ -95,7 +113,7 @@ GET inelenco-unofficial-api.herokuapp.com/search
 		<tr>
 			<td>categoria</td>
 			<td><i>Qualsiasi</i></td>
-			<td>Settore azienda; vedere elenco settori sul sito di InElenco (parte non chiara)</td>
+			<td>Settore azienda; vedere elenco settori sul sito di inElenco (parte non chiara)</td>
 			<td></td>
 			<td>NO</td>
 		</tr>
@@ -141,7 +159,7 @@ GET inelenco-unofficial-api.herokuapp.com/search
 			<td>custom_query</td>
 			<td><i>Qualsiasi</i></td>
 			<td>
-				Se è presente questo parametro TUTTI gli altri verranno ignorati. Specifica una query personalizzata da sottoporre alla ricerca di InElenco. Per maggiori informazioni sulle query supportate vedere la <a href="https://www.inelenco.com/?dir=guida">guida di InElenco</a>.
+				Se è presente questo parametro TUTTI gli altri verranno ignorati. Specifica una query personalizzata da sottoporre alla ricerca di inElenco. Per maggiori informazioni sulle query supportate vedere la <a href="https://www.inelenco.com/?dir=guida">guida di inElenco</a>.
 				<br>
 				E' molto importante che nella richiesta la query venga codificata utilizzando la funzione JS <code>encodeURIComponent(query)</code> (o un suo equivalente in caso si stesse utilizzando un altro linguaggio)
 				<br>
@@ -161,5 +179,8 @@ curl -sG "https://inelenco-unofficial-api.herokuapp.com/search?indirizzo=Via%20R
 ```
 
 ## :bell: Disclaimer
-- Non sono affiliato nè tantomeno in qualche modo collegato al proprietario di <a href="https://www.inelenco.com/">InElenco</a>.
+- Non sono affiliato nè tantomeno in qualche modo collegato al proprietario di <a href="https://www.inelenco.com/">inElenco</a>.
 - Questa API non è ufficiale e non si assicura il suo mantenimento nel tempo. Usare con cautela.
+
+## Copyright
+Per qualsiasi dibattito legale o per problemi legati al Copyright vi invito a contattarmi aprendo un [issue](https://github.com/LukeSavefrogs/inelenco-unofficial-api/issues) e risponderò al più presto.

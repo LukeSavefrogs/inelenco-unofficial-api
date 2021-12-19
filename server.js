@@ -15,7 +15,7 @@ app.use(cors())
 
 
 
-app.set('title', 'InElenco Unofficial API');
+app.set('title', 'inElenco Unofficial API');
 
 app.use('/usage', help_route);
 app.use('/search', search_route);

@@ -76,6 +76,16 @@ function parseHTML (data) {
 
 // define the home page route
 router.get('/', async (req, res) => {
+	if (Object.keys(req.query).length == 0) {
+		res.status(400).json({
+			"success": false,
+			"message": "Devi specificare almeno un parametro.",
+			"results": 0,
+			"data": [],
+		});
+		return;
+	}
+
 	const inelenco_parameters = {
 		"nome": req.query['nome'] || "",
 		"indirizzo": req.query['indirizzo'] || "",
@@ -105,7 +115,7 @@ router.get('/', async (req, res) => {
 	) {
 		res.status(400).json({
 			"success": false,
-			"message": "I parametri `numero_civico`, `numero_civico_da` e `numero_civico_a` devono essere degli interi > 0",
+			"message": "I parametri 'numero_civico', 'numero_civico_da' e 'numero_civico_a' devono essere degli interi > 0",
 			"results": 0,
 			"data": [],
 		});
@@ -117,7 +127,7 @@ router.get('/', async (req, res) => {
 		if (numero_civico_da <= 0 || numero_civico_a <= 0){
 			res.status(400).json({
 				"success": false,
-				"message": "Hai specificato `numero_civico_da` o `numero_civico_a` quindi devono essere ENTRAMBI degli interi > 0",
+				"message": "Hai specificato 'numero_civico_da' o 'numero_civico_a' quindi devono essere ENTRAMBI degli interi > 0",
 				"results": 0,
 				"data": [],
 			});
@@ -126,7 +136,7 @@ router.get('/', async (req, res) => {
 		if (numero_civico_da > numero_civico_a){
 			res.status(400).json({
 				"success": false,
-				"message": "Il parametro `numero_civico_da` deve essere sempre INFERIORE al parametro `numero_civico_a`",
+				"message": "Il parametro 'numero_civico_da' deve essere sempre INFERIORE al parametro 'numero_civico_a'",
 				"results": 0,
 				"data": [],
 			});
@@ -208,7 +218,7 @@ router.get('/', async (req, res) => {
 	//! Se sono stati trovati TROPPI risultati (> 1000)
 	// TODO: Permetti di fare grandi ricerche ma restituisci solo i primi 1000 risultati
 	// Questo controllo serve per evitare una sorta di DDOS e per evitare che gli utenti per errore facciano 
-	// 	una richiesta che possa bloccare il mio server e appesantire quello di InElenco
+	// 	una richiesta che possa bloccare il mio server e appesantire quello di inElenco
 	if (search_details["totale_risultati"] > 1000 && !expect_big_query) {
 		res.status(200).json({
 			"success": false,
