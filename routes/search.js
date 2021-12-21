@@ -130,6 +130,7 @@ router.get('/', async (req, res) => {
 	}
 
 	const expect_big_query = (req.query['allow_big_query'] || "false") == "true" ? true : false;
+	const EXACT_MATCH = (req.query['tipo_corrispondenza_indirizzo'] || "esatta") == "esatta" ? true : false;
 	const custom_query = req.query['custom_query']?.trim() || "";
 
 	const numero_civico = Number(req.query['civico'] || 0);
@@ -180,11 +181,23 @@ router.get('/', async (req, res) => {
 		numero_civico_da = numero_civico;
 		numero_civico_a = numero_civico;
 	}
-	
+
 	let url = `${INELENCO_URL}?dir=cerca&cerca=${encodeURIComponent(custom_query)}`;
 	if (custom_query == "") {
-		// Trasformo i parametri in pezzi della query che poi andrò ad unire in seguito
 		let query_pieces = []
+		if (!EXACT_MATCH) {
+			query_pieces.push(
+				inelenco_parameters["indirizzo"]
+					.replace(/\s+/, " ")
+					.split(" ")
+					.map(item => `indirizzo:${item}`)
+					.join(" AND ")
+			);
+
+			inelenco_parameters["indirizzo"] = "";	
+		}
+		
+		// Trasformo i parametri in pezzi della query che poi andrò ad unire in seguito
 		for (const param in inelenco_parameters){
 			if (inelenco_parameters[param].trim() != "") query_pieces.push(`${param}:"${inelenco_parameters[param]}"`);
 		}

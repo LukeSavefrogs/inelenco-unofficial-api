@@ -169,6 +169,15 @@ GET inelenco-unofficial-api.herokuapp.com/search
 			<td><code>nome:Rossi cap:20100 AND -nome:"Fra*"</code></td>
 			<td>NO</td>
 		</tr>
+		<tr>
+			<td>tipo_corrispondenza_indirizzo</td>
+			<td><i>esatta | parziale</i></td>
+			<td>
+				Specifica in che modalità cercare l'indirizzo. Se è <code>esatta</code> cercherà un indirizzo che contenga esattamente la stringa passata (es. Via Roma comprenderà SOLO "Via Roma"), mentre <code>parziale</code> potrebbe restituire anche "Via Francesco Roma" (per esempio).
+			</td>
+			<td><code>parziale</code></td>
+			<td>NO</td>
+		</tr>
 	</tbody>
 </table>
 
