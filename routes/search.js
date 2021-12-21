@@ -169,9 +169,21 @@ router.get('/', async (req, res) => {
 	console.log("Requesting url: " + url)
 
 	// Scarica l'html della pagina e salvalo in una variabile
-	let html = await fetch(`https://cors-anywhere-luke.herokuapp.com/${url}`, { headers: { "Origin": "localhost" }})
-					.then(res => res.text());
+	let html = "";
 
+	try{
+		html = await fetch(`https://cors-anywhere-luke.herokuapp.com/${url}`, { headers: { "Origin": "localhost" }})
+			.then(res => res.text());
+	} catch (e) {
+		console.error(`Errore nella richiesta verso la pagina '${url}&da=${current_page*10}': %o`, e)
+		res.status(500).json({
+			"success": false,
+			"message": `Errore nella richiesta verso la pagina '${url}&da=${current_page*10}': ${e.message}`,
+			"results": search_details["totale_risultati"],
+			"data": []
+		});
+		return;
+	}
 	let formatted_data = [];
 
 	// Inizializza l'oggetto JSDOM con l'html appena scaricato
@@ -236,8 +248,20 @@ router.get('/', async (req, res) => {
 
 		// Scarica nuovamente i dati solo se non è la prima volta che esegui il loop
 		if (current_page != 0){
-			html = await fetch(`https://cors-anywhere-luke.herokuapp.com/${url}&da=${current_page*10}`, { headers: { "Origin": "localhost" }})
-				.then(res => res.text());
+			try{
+				html = await fetch(`https://cors-anywhere-luke.herokuapp.com/${url}&da=${current_page*10}`, { headers: { "Origin": "localhost" }})
+					.then(res => res.text());
+			} catch (e) {
+				console.error(`Errore nella richiesta verso la pagina '${url}&da=${current_page*10}': %o`, e)
+				res.status(500).json({
+					"success": false,
+					"message": `Errore nella richiesta verso la pagina '${url}&da=${current_page*10}': ${e.message}`,
+					"results": search_details["totale_risultati"],
+					"data": []
+				});
+				return;
+			}
+			
 			dom = new jsdom.JSDOM(html);
 			pages = Math.max(
 				...Array.from(
