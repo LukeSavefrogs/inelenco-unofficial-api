@@ -35,41 +35,71 @@ function generateNumberSequence (start, end, all_numbers = false) {
 		"",
 	]
 */
-function normalizeContentHTML (rows) {
-	return Array.from(rows).map(el => innerText(el).replace(/\r?\n/g, " ").trim()).filter((element, index, array) => {
-		return element.trim() != "" 
-			|| (
-				element.trim() == "" && (array[index-1] == "" || array[index+1] == "")
-			)
-	});
-}
-
-
+// function normalizeContentHTML (rows) {
+// 	return Array.from(rows)
+// 		.map(el => innerText(el).replace(/\r?\n/g, " ").trim())
+// 		.filter((element, index, array) => {
+// 			return element.trim() != "" 
+// 				|| (
+// 					element.trim() == "" && (array[index-1] == "" || array[index+1] == "")
+// 				)
+// 		});
+// }
 // Creo un Array contenente Array(4) con i dati
-function parseHTML (data) {
-	const temp_array = []; 
-	let slice_start = null;
+// function parseHTML (data) {
+// 	const temp_array = []; 
+// 	let slice_start = null;
 
-	for (let key in data) {
-		let value = data[key];
-		if (value.trim() != "" && slice_start == null) {
-			slice_start = key;
-		} else if (value.trim() == "" && slice_start != null) {
-			temp_array.push(data.slice(slice_start, key-1));
-			slice_start = null;
-		}
-	}
+// 	console.log(data)
+
+// 	for (let key in data) {
+// 		let value = data[key];
+// 		if (value.trim() != "" && slice_start == null) {
+// 			slice_start = key;
+// 		} else if (value.trim() == "" && slice_start != null && key - slice_start >= 3) {
+// 			// console.log("A - ", data.slice(slice_start, key-1))
+// 			temp_array.push(data.slice(slice_start, key-1));
+// 			slice_start = null;
+// 		}
+// 	}
+
+// 	console.log(temp_array)
 	
-	return temp_array.map(data_group => {
+// 	return temp_array.map(data_group => {
+// 		// console.log(data_group)
+// 		return {
+// 			"nominativo": data_group[0],
+// 			"telefono": data_group[1].replace(/telefono\s*/i, ""),
+// 			"indirizzo": data_group[2],
+// 			"zona": data_group[3],
+// 		};
+// 	});
+// }
+
+function extractData (rows) {
+	const rows_array = Array.from(rows);
+	const result = [];
+
+	let temp_array = [];
+	for (let row of rows_array) {
+		if (row.classList.contains("cerca")) { // Se ho incontrato un nominativo, reinizializzo l'array
+			if (temp_array.length > 0) result.push(temp_array);
+			temp_array = [];
+		}
+		temp_array.push(innerText(row).replace(/\r?\n/g, " ").trim())
+	}
+	if (temp_array.length > 0) result.push(temp_array);
+
+	return result.map(data_group => {
 		return {
 			"nominativo": data_group[0],
 			"telefono": data_group[1].replace(/telefono\s*/i, ""),
 			"indirizzo": data_group[2],
 			"zona": data_group[3],
+			// "altro": data_group[4]
 		};
-	});
+	});;
 }
-
 
 
 // https://medium.com/@bojanmajed/standard-json-api-response-format-c6c1aabcaa6d
@@ -190,7 +220,8 @@ router.get('/', async (req, res) => {
 	let dom = new jsdom.JSDOM(html);
 	let content = dom.window.document.getElementById("content");
 	let contentHead = dom.window.document.getElementById("contenthead");
-	let rows = content.querySelectorAll("tbody > tr");
+	let rows = content.querySelectorAll("#content tbody > tr .cerca, .dativ, .dati");
+
 
 
 	let search_details = contentHead.textContent.match(/([0-9]*) - ([0-9]*) di ([0-9]*) risultati in \(([0-9\.]*) Secondi\)/)
@@ -201,7 +232,8 @@ router.get('/', async (req, res) => {
 		"durata_ricerca": search_details[4],
 	}
 
-	console.log("Total results: " + search_details["totale_risultati"])
+	totale_risultati = search_details["totale_risultati"];
+	console.log("Total results: " + totale_risultati)
 
 	// Se non ci sono dati disponibili restituisci un mesaggio appropriato
 	let pages = 0
@@ -244,8 +276,11 @@ router.get('/', async (req, res) => {
 
 	let current_page = 0;
 	do {
+		// current_page = 80 // For TEST
 		console.log(`Current Page: ${current_page} of ${pages} (${search_details["totale_risultati"]} results) [${search_details["durata_ricerca"]}s]`)
-
+		console.log(`${url}&da=${current_page*10}`)
+		
+		
 		// Scarica nuovamente i dati solo se non è la prima volta che esegui il loop
 		if (current_page != 0){
 			try{
@@ -271,7 +306,8 @@ router.get('/', async (req, res) => {
 			);
 
 			content = dom.window.document.getElementById("content");
-			rows = content.querySelectorAll("tbody > tr");
+			// rows = content.querySelectorAll("tbody > tr");
+			rows = content.querySelectorAll("#content tbody > tr .cerca, .dativ, .dati");
 			contentHead = dom.window.document.getElementById("contenthead");
 			search_details = contentHead.textContent.match(/([0-9]*) - ([0-9]*) di ([0-9]*) risultati in \(([0-9\.]*) Secondi\)/)
 			search_details = {
@@ -283,14 +319,25 @@ router.get('/', async (req, res) => {
 		}
 	
 		// Prima pulisce l'HTML e lo trasforma in un Array e poi parsa quell'array e lo trasforma in un JSON
-		formatted_data.push(parseHTML(normalizeContentHTML(rows)));
+		// formatted_data.push(parseHTML(normalizeContentHTML(rows)));
+		formatted_data.push(extractData(rows));
 
+		// break // For TEST
 		current_page++;
 	} while (current_page <= pages);
 
 	const flattened_data = formatted_data.flat()
 	console.log("Returned results: " + flattened_data.length)
 
+	if (flattened_data.length != totale_risultati) {
+		res.status(206).json({
+			"success": true,
+			"message": `Dati trovati ma il loro totale (${flattened_data.length}) differisce da quello di inElenco (${totale_risultati})`,
+			"results": flattened_data.length,
+			"data": flattened_data
+		})
+		return
+	}
 	res.json({
 		"success": true,
 		"message": "Dati trovati",
