@@ -124,6 +124,7 @@ router.get('/', async (req, res) => {
 		"fax": req.query['fax'] || "",
 		"cellulare": req.query['cellulare'] || "",
 		"provincia": req.query['provincia'] || "",
+		"comune": req.query['comune'] || "",
 		"tipo": req.query['tipo'] || "",
 		"categoria": req.query['categoria'] || "",
 	}
