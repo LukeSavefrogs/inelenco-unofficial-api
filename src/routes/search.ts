@@ -1,96 +1,107 @@
 const INELENCO_URL = "https://www.inelenco.com/";
 
-var express = require('express');
+import express from 'express';
 var router = express.Router();
 
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const jsdom = require("jsdom");
+/**
+ * Non posso utilizzare la sintassi CJS perchè è stata deprecata con la versione node-fetch@3.0.0.
+ * Non posso nemmeno usare la sintassi ESM perchè il progetto è scritto in CJS.
+ * 
+ * @see https://stackoverflow.com/a/70192405/8965861
+ * @see https://github.com/node-fetch/node-fetch/issues/1279
+ * 
+ * * Funziona senza TypeScript
+ * const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args);
+ * 
+ * * Funziona CON TypeScript, ma viene rotto in fase di compilazione TS -> JS:
+ * const fetch = <T extends any[]> (...args: T) => fetchP.then((fn: any) => fn(...args));
+ *  
+ * * Non funziona perchè il progetto è scritto in CJS:
+ * import fetch from 'node-fetch';
+ */
+const importDynamic = new Function('modulePath', 'return import(modulePath)');
+const fetch = async (...args:any[]) => {
+	const module = await importDynamic('node-fetch');
+	return module.default(...args);
+};
 
 
-// @source https://github.com/jsdom/jsdom/issues/1245#issuecomment-584677454
-function innerText(el) {
-  el = el.cloneNode(true) // can skip if mutability isn't a concern
-  el.querySelectorAll('script,style').forEach(s => s.remove())
-  return el.textContent
+/* 
+	Libreria che implementa le funzioni di analisi della DOM (document.querySelectorAll, ecc...)
+*/
+import jsdom from 'jsdom';
+
+// TODO: Create an interface for the GET Parameters
+interface Map {
+	[key: string]: string;
 }
 
-function generateNumberSequence (start, end, all_numbers = false) {
+/**
+ * Object representing one result from InElenco.
+ */
+type APIResponse = {
+	nominativo: string,
+	indirizzo: string,
+	telefono: string,
+	zona: string
+}
+
+
+/**
+ * Polyfill per il metodo nativo dei Browser `Element.innerText()`
+ * @param element Elemento da cui estrarre il testo
+ * @see https://github.com/jsdom/jsdom/issues/1245#issuecomment-584677454
+ */
+function innerText(element: Element): string {
+	if (!element) return "";
+	let el = element.cloneNode(true) as Element; // can skip if mutability isn't a concern
+	el.querySelectorAll('script,style').forEach(s => s.remove());
+	return el.textContent || "";
+}
+
+
+/**
+ * Generates an array of numbers from `start` to `end`.
+ * 
+ * @param start Start of the sequence
+ * @param end End of sequence
+ * @param all_numbers Wether to include all numbers or not
+ * @returns Array with all the numbers
+ */
+function generateNumberSequence (start: number, end: number, all_numbers: boolean = false) {
 	let numbers = Array.from({ length: end }, (v, i) => i+1).splice(start - 1);
 	if (!all_numbers) numbers = numbers.filter(num => num % 2 == (start % 2));
-
 	return numbers;
 }
 
 
-/*  
-	Pulisce e normalizza l'HTML del 'content', nello specifico rimuove tutti gli spazi superflui.
-	Restituisce un array con la struttura: 
-	[
-		"Nome Cognome",
-		"Telefono",
-		"Indirizzo",
-		"CAP Città Provincia",
-		"",
-		"",
-		"",
-	]
-*/
-// function normalizeContentHTML (rows) {
-// 	return Array.from(rows)
-// 		.map(el => innerText(el).replace(/\r?\n/g, " ").trim())
-// 		.filter((element, index, array) => {
-// 			return element.trim() != "" 
-// 				|| (
-// 					element.trim() == "" && (array[index-1] == "" || array[index+1] == "")
-// 				)
-// 		});
-// }
-// Creo un Array contenente Array(4) con i dati
-// function parseHTML (data) {
-// 	const temp_array = []; 
-// 	let slice_start = null;
+/**
+ * 
+ * @param rows Righe della tabella con cui è formato il layout della pagina
+ * @returns Oggetto con le informazioni sui nominativi
+ */
+function extractData (rows: NodeListOf<Element>): APIResponse[] {
+	if (rows.length == 0) return [];
 
-// 	console.log(data)
-
-// 	for (let key in data) {
-// 		let value = data[key];
-// 		if (value.trim() != "" && slice_start == null) {
-// 			slice_start = key;
-// 		} else if (value.trim() == "" && slice_start != null && key - slice_start >= 3) {
-// 			// console.log("A - ", data.slice(slice_start, key-1))
-// 			temp_array.push(data.slice(slice_start, key-1));
-// 			slice_start = null;
-// 		}
-// 	}
-
-// 	console.log(temp_array)
-	
-// 	return temp_array.map(data_group => {
-// 		// console.log(data_group)
-// 		return {
-// 			"nominativo": data_group[0],
-// 			"telefono": data_group[1].replace(/telefono\s*/i, ""),
-// 			"indirizzo": data_group[2],
-// 			"zona": data_group[3],
-// 		};
-// 	});
-// }
-
-function extractData (rows) {
-	const rows_array = Array.from(rows);
-	const result = [];
+	const rows_array = Array.from(rows); 
+	const result: string[][] = [];
 
 	let temp_array = [];
 	for (let row of rows_array) {
-		if (row.classList.contains("cerca")) { // Se ho incontrato un nominativo, reinizializzo l'array
+		if (!row) continue;
+
+		// Se ho incontrato un nominativo, reinizializzo l'array
+		if (row.classList.contains("cerca")) {
 			if (temp_array.length > 0) result.push(temp_array);
 			temp_array = [];
 		}
+		
 		temp_array.push(innerText(row).replace(/\r?\n/g, " ").trim())
 	}
 	if (temp_array.length > 0) result.push(temp_array);
 
-	return result.map(data_group => {
+	// First execute `map` on the array, then it `flat`tens the result
+	return result.flatMap(data_group => {
 		return {
 			"nominativo": data_group[0],
 			"telefono": data_group[1].replace(/telefono\s*/i, ""),
@@ -98,14 +109,30 @@ function extractData (rows) {
 			"zona": data_group[3],
 			// "altro": data_group[4]
 		};
-	});;
+	});
 }
 
+
+function get_current_search_details (contentHead: HTMLElement) {
+	if (!contentHead) throw new Error("Content head not found");
+	
+	const search_details = contentHead?.textContent?.match(/([0-9]*) - ([0-9]*) di ([0-9]*) risultati in \(([0-9\.]*) Secondi\)/)
+	
+	if (!search_details) throw new Error("Couldn't find Search Details");
+
+	return {
+		"pagina_min": Number(search_details[1]),
+		"pagina_max": Number(search_details[2]),
+		"totale_risultati": Number(search_details[3]),
+		"durata_ricerca": search_details[4],
+	}
+}
 
 // https://medium.com/@bojanmajed/standard-json-api-response-format-c6c1aabcaa6d
 
 // define the home page route
 router.get('/', async (req, res) => {
+	// Se non ho passato nessun parametro, restituisco un errore
 	if (Object.keys(req.query).length == 0) {
 		res.status(400).json({
 			"success": false,
@@ -116,22 +143,23 @@ router.get('/', async (req, res) => {
 		return;
 	}
 
-	const inelenco_parameters = {
-		"nome": req.query['nome'] || "",
-		"indirizzo": req.query['indirizzo'] || "",
-		"cap": req.query['cap'] || "",
-		"telefono": req.query['telefono'] || "",
-		"fax": req.query['fax'] || "",
-		"cellulare": req.query['cellulare'] || "",
-		"provincia": req.query['provincia'] || "",
-		"comune": req.query['comune'] || "",
-		"tipo": req.query['tipo'] || "",
-		"categoria": req.query['categoria'] || "",
+	// Inizializzo l'oggetto contenente i parametri proprietari di inElenco
+	const inelenco_parameters: Map = {
+		"nome": (req.query['nome']?.toString()) || "",
+		"indirizzo": (req.query['indirizzo']?.toString()) || "",
+		"cap": (req.query['cap']?.toString()) || "",
+		"telefono": (req.query['telefono']?.toString()) || "",
+		"fax": (req.query['fax']?.toString()) || "",
+		"cellulare": (req.query['cellulare']?.toString()) || "",
+		"provincia": (req.query['provincia']?.toString()) || "",
+		"comune": (req.query['comune']?.toString()) || "",
+		"tipo": (req.query['tipo']?.toString()) || "",
+		"categoria": (req.query['categoria']?.toString()) || "",
 	}
 
 	const expect_big_query = (req.query['allow_big_query'] || "false") == "true" ? true : false;
 	const EXACT_MATCH = (req.query['tipo_corrispondenza_indirizzo'] || "esatta") == "esatta" ? true : false;
-	const custom_query = req.query['custom_query']?.trim() || "";
+	const custom_query = (req.query['custom_query']?.toString() || "").trim();
 
 	const numero_civico = Number(req.query['civico'] || 0);
 	let numero_civico_da = Number(req.query['civico_da'] || 0);
@@ -188,18 +216,23 @@ router.get('/', async (req, res) => {
 		if (!EXACT_MATCH) {
 			query_pieces.push(
 				inelenco_parameters["indirizzo"]
+					.toString()
 					.replace(/\s+/, " ")
 					.split(" ")
 					.map(item => `indirizzo:${item}`)
 					.join(" AND ")
 			);
 
+			// Lo abbiamo già pushato nell'array delle parti della query da costruire, quindi 
+			// lo tolgo dai parametri di inelenco
 			inelenco_parameters["indirizzo"] = "";	
 		}
 		
 		// Trasformo i parametri in pezzi della query che poi andrò ad unire in seguito
 		for (const param in inelenco_parameters){
-			if (inelenco_parameters[param].trim() != "") query_pieces.push(`${param}:"${inelenco_parameters[param]}"`);
+			if (inelenco_parameters[param].trim() != "") {
+				query_pieces.push(`${param}:"${inelenco_parameters[param]}"`);
+			}
 		}
 
 		// Se sono stati specificati dei Numeri Civici limite da rispettare, aggiungili all'array delle query
@@ -214,6 +247,7 @@ router.get('/', async (req, res) => {
 
 	// Scarica l'html della pagina e salvalo in una variabile
 	let html = "";
+	let current_page = 0;
 
 	try{
 		html = await fetch(`https://cors-anywhere-luke.herokuapp.com/${url}`, { headers: { "Origin": "localhost" }})
@@ -222,31 +256,34 @@ router.get('/', async (req, res) => {
 		console.error(`Errore nella richiesta verso la pagina '${url}&da=${current_page*10}': %o`, e)
 		res.status(500).json({
 			"success": false,
-			"message": `Errore nella richiesta verso la pagina '${url}&da=${current_page*10}': ${e.message}`,
-			"results": search_details["totale_risultati"],
+			"message": `Errore nella richiesta verso la pagina '${url}&da=${current_page*10}': ${e}`,
+			"results": 0,
 			"data": []
 		});
 		return;
 	}
-	let formatted_data = [];
+	let formatted_data: Array<APIResponse>  = [];
 
 	// Inizializza l'oggetto JSDOM con l'html appena scaricato
 	let dom = new jsdom.JSDOM(html);
 	let content = dom.window.document.getElementById("content");
+
+	if (!content) {
+		res.status(500).json({
+			"success": false,
+			"message": "Errore nella richiesta verso la pagina '" + url + "': la pagina non ha restituito un contenuto valido",
+			"results": 0,
+			"data": []
+		});
+		return;
+	}
+
 	let contentHead = dom.window.document.getElementById("contenthead");
 	let rows = content.querySelectorAll("#content tbody > tr .cerca, .dativ, .dati");
 
+	let search_details = get_current_search_details(contentHead as HTMLElement);
 
-
-	let search_details = contentHead.textContent.match(/([0-9]*) - ([0-9]*) di ([0-9]*) risultati in \(([0-9\.]*) Secondi\)/)
-	search_details = {
-		"pagina_min": search_details[1],
-		"pagina_max": search_details[2],
-		"totale_risultati": search_details[3],
-		"durata_ricerca": search_details[4],
-	}
-
-	totale_risultati = search_details["totale_risultati"];
+	let totale_risultati = search_details["totale_risultati"];
 	console.log("Total results: " + totale_risultati)
 
 	// Se non ci sono dati disponibili restituisci un mesaggio appropriato
@@ -256,7 +293,7 @@ router.get('/', async (req, res) => {
 			...Array.from(
 				dom.window.document.querySelectorAll("body > table > tbody > tr:nth-of-type(9) > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(4) > table > tbody > tr > td > a:not(.listapaggira)")
 			)
-			.map(a => a.textContent)
+			.map(a => Number(a.textContent))
 		);
 	}
 
@@ -284,11 +321,10 @@ router.get('/', async (req, res) => {
 			"results": search_details["totale_risultati"],
 			"data": []
 		});
-		return;
+		return false;
 	}
 
 
-	let current_page = 0;
 	do {
 		// current_page = 80 // For TEST
 		console.log(`Current Page: ${current_page} of ${pages} (${search_details["totale_risultati"]} results) [${search_details["durata_ricerca"]}s]`)
@@ -304,7 +340,7 @@ router.get('/', async (req, res) => {
 				console.error(`Errore nella richiesta verso la pagina '${url}&da=${current_page*10}': %o`, e)
 				res.status(500).json({
 					"success": false,
-					"message": `Errore nella richiesta verso la pagina '${url}&da=${current_page*10}': ${e.message}`,
+					"message": `Errore nella richiesta verso la pagina '${url}&da=${current_page*10}': ${e}`,
 					"results": search_details["totale_risultati"],
 					"data": []
 				});
@@ -316,47 +352,68 @@ router.get('/', async (req, res) => {
 				...Array.from(
 					dom.window.document.querySelectorAll("body > table > tbody > tr:nth-of-type(9) > td > table > tbody > tr:nth-of-type(5) > td:nth-of-type(4) > table > tbody > tr > td > a:not(.listapaggira)")
 				)
-				.map(a => a.textContent)
+				.map(a => Number(a.textContent))
 			);
 
 			content = dom.window.document.getElementById("content");
-			// rows = content.querySelectorAll("tbody > tr");
+
+			if (!content) {
+				res.status(500).json({
+					"success": false,
+					"message": "Errore nella richiesta verso la pagina '" + url + "': la pagina non ha restituito un contenuto valido",
+					"results": 0,
+					"data": []
+				});
+				return;
+			}
+			
 			rows = content.querySelectorAll("#content tbody > tr .cerca, .dativ, .dati");
 			contentHead = dom.window.document.getElementById("contenthead");
-			search_details = contentHead.textContent.match(/([0-9]*) - ([0-9]*) di ([0-9]*) risultati in \(([0-9\.]*) Secondi\)/)
-			search_details = {
-				"pagina_min": search_details[1],
-				"pagina_max": search_details[2],
-				"totale_risultati": search_details[3],
-				"durata_ricerca": search_details[4],
-			}
+			search_details = get_current_search_details(contentHead as HTMLElement); 
 		}
 	
 		// Prima pulisce l'HTML e lo trasforma in un Array e poi parsa quell'array e lo trasforma in un JSON
 		// formatted_data.push(parseHTML(normalizeContentHTML(rows)));
-		formatted_data.push(extractData(rows));
+		formatted_data = formatted_data.concat(extractData(rows));
 
 		// break // For TEST
 		current_page++;
 	} while (current_page <= pages);
 
-	const flattened_data = formatted_data.flat()
-	console.log("Returned results: " + flattened_data.length)
+	console.log("Returned results: " + formatted_data.length)
 
-	if (flattened_data.length != totale_risultati) {
-		res.status(206).json({
-			"success": true,
-			"message": `Dati trovati ma il loro totale (${flattened_data.length}) differisce da quello di inElenco (${totale_risultati})`,
-			"results": flattened_data.length,
-			"data": flattened_data
+	// Se il numero dei risultati trovati tramite parsing E' DIVERSO dal numero di risultati dichiarati da inElenco
+	if (formatted_data.length != totale_risultati) {
+		res.status(500).json({
+			"success": false,
+			"message": `Dati trovati ma il loro totale (${formatted_data.length}) differisce da quello di inElenco (${totale_risultati}). Contattare lo sviluppatore.`,
+			"results": formatted_data.length,
+			"data": []
 		})
-		return
+		return false;
 	}
+	
+	/**
+	 * Rimuovi i dati duplicati
+	 * 
+	 * @see https://stackoverflow.com/questions/53542882/es6-removing-duplicates-from-array-of-objects
+	 * 
+	 */
+	let keys = Object.keys(formatted_data[0]) as (keyof APIResponse)[];
+	let filtered = formatted_data.filter(
+        (s => (o: APIResponse) => 
+            (k => !s.has(k) && s.add(k))
+            (keys.map(k => o[k]).join('|'))
+        )
+        (new Set)
+    )
+
+	const output_data = filtered;
 	res.json({
 		"success": true,
 		"message": "Dati trovati",
-		"results": flattened_data.length,
-		"data": flattened_data
+		"results": output_data.length,
+		"data": output_data
 	})
 });
 

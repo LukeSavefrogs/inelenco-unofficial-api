@@ -1,6 +1,7 @@
-const express = require('express')
-const cors = require('cors')
-const apicache = require('apicache');
+import express from 'express';
+
+import cors from 'cors';
+import apicache from 'apicache';
 
 const app = express()
 const port = process.env.PORT || 2000
@@ -13,14 +14,12 @@ let cache = apicache.middleware;
 app.use(cache('20 minutes'));
 app.use(cors())
 
-
-
 app.set('title', 'inElenco Unofficial API');
 
 app.use('/usage', help_route);
 app.use('/search', search_route);
 
-app.get('*', function(req, res){
+app.get('*', function(req: express.Request, res: express.Response) {
 	res.redirect("/usage")
 });
 
