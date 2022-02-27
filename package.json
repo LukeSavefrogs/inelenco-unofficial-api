@@ -11,8 +11,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --clear src/server.ts",
-    "build": "tsc",
-    "postinstall": "npm run build",
+    "build": "npm run tsc",
+	"tsc": "tsc",
     "start": "node dist/server.js"
   },
   "author": "",
