@@ -24,7 +24,9 @@ Questo progetto è stato quindi creato per scopo didattico, si rifa a dati pubbl
 > https://inelenco-unofficial-api.herokuapp.com
 
 ### Front-End
-:rocket: _In arrivo_ :rocket:
+> :construction::construction_worker: _In fase di sviluppo_ :construction_worker::construction:
+> 
+> https://cerca-indirizzi.netlify.app
 
 ## :books: Documentazione
 ### Endpoint richieste
