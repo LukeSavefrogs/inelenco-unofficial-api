@@ -12,7 +12,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --clear src/server.ts",
     "build": "tsc --clean",
-    "start": "npm run build && node dist/server.js"
+	"postinstall": "tsc --clean",
+    "start": "node dist/server.js"
   },
   "author": "",
   "license": "ISC",
@@ -21,7 +22,9 @@
     "cors": "^2.8.5",
     "express": "^4.17.2",
     "jsdom": "^19.0.0",
-    "node-fetch": "^3.2.0"
+    "node-fetch": "^3.2.0",
+    "typescript": "^4.5.4",
+	"tsc": "^2.0.3"
   },
   "devDependencies": {
     "@types/apicache": "^1.6.1",
@@ -30,8 +33,6 @@
     "@types/jsdom": "^16.2.14",
     "@types/node": "^17.0.8",
     "ts-node-dev": "^1.1.8",
-    "tsc": "^2.0.3",
-    "typescript": "^4.5.4",
     "nodemon": "^2.0.15"
   }
 }
