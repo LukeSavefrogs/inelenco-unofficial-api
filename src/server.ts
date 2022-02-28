@@ -6,8 +6,8 @@ import apicache from 'apicache';
 const app = express()
 const port = process.env.PORT || 2000
 
-const search_route = require('./routes/search');
-const help_route = require('./routes/help/help');
+const search_route = require('./routes/search.ts');
+const help_route = require('./routes/help/help.js');
 
 
 let cache = apicache.middleware;
