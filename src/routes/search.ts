@@ -1,7 +1,7 @@
 const INELENCO_URL = "https://www.inelenco.com/";
 
-import express from 'express';
-var router = express.Router();
+import express, { Request, Response } from "express";
+var search_route = express.Router();
 
 /**
  * Non posso utilizzare la sintassi CJS perchè è stata deprecata con la versione node-fetch@3.0.0.
@@ -131,7 +131,7 @@ function get_current_search_details (contentHead: HTMLElement) {
 // https://medium.com/@bojanmajed/standard-json-api-response-format-c6c1aabcaa6d
 
 // define the home page route
-router.get('/', async (req, res) => {
+search_route.get('/', async (req: Request, res: Response) => {
 	// Se non ho passato nessun parametro, restituisco un errore
 	if (Object.keys(req.query).length == 0) {
 		res.status(400).json({
@@ -418,4 +418,4 @@ router.get('/', async (req, res) => {
 });
 
 
-module.exports = router;
+export default search_route;
