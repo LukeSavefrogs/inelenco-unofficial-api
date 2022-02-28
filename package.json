@@ -11,8 +11,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node-dev --clear src/server.ts",
-    "build": "tsc",
-    "start": "npm run build && node dist/server.js"
+    "build": "npx tsc",
+    "start": "node dist/server.js"
   },
   "author": "",
   "license": "ISC",
@@ -32,7 +32,6 @@
   "devDependencies": {
     "nodemon": "^2.0.15",
     "ts-node": "^10.5.0",
-    "ts-node-dev": "^1.1.8",
-    "tsc": "^2.0.3"
+    "ts-node-dev": "^1.1.8"
   }
 }
