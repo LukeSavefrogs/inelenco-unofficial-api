@@ -27,7 +27,7 @@
     "cors": "^2.8.5",
     "express": "^4.17.2",
     "express-correlation-id": "^2.0.1",
-    "jsdom": "^19.0.0",
+    "jsdom": "^20.0.0",
     "node-fetch": "^3.2.0",
     "typescript": "^4.5.5"
   },
